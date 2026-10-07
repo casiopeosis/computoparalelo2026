@@ -6,9 +6,22 @@
 
 using namespace std;
 
-// computes all-pairs shortest paths using the Floyd-Warshall algorithm. 
+// computes all-pairs shortest paths using the Floyd-Warshall algorithm.
 void floydWarshall(int** graph, int size) {
+    const int INF = 1000000;
 
+    for (int i = 0; i < size; i++)
+        for (int j = 0; j < size; j++)
+            if (i != j && graph[i][j] == 0)
+                graph[i][j] = INF;
+
+    for (int k = 0; k < size; k++) {
+        #pragma omp parallel for collapse(2)
+        for (int i = 0; i < size; i++)
+            for (int j = 0; j < size; j++)
+                if (graph[i][k] + graph[k][j] < graph[i][j])
+                    graph[i][j] = graph[i][k] + graph[k][j];
+    }
 }
 
 ///////////////////////////////////////////////////////////
@@ -16,9 +29,12 @@ void floydWarshall(int** graph, int size) {
 // creates a random graph of |size| vertices
 void createRandomGraph(int** graph, int size) {
 
-    for (int i = 0; i < size; i++)  
-        for (int j = 0; j < size; j++)  
+    #pragma omp parallel for
+    for (int i = 0; i < size; i++)
+        for (int j = 0; j < size; j++) {
+            #pragma omp critical
             graph[i][j] = 0;
+        }
 
     // Random adjacency matrix  
     for (int i = 0; i < size-1; i++)
